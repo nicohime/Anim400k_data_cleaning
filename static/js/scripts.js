@@ -192,14 +192,29 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(results),
             })
-                .then(response => response.json())
+                .then(async response => {
+                    if (!response.ok) {
+                        // 尝试解析错误响应
+                        const errorData = await response.json();
+                        if (errorData.message) {
+                            throw new Error(errorData.message); // 抛出后端返回的错误消息
+                        } else {
+                            throw new Error("提交失败，请稍后再试！");
+                        }
+                    }
+                    return response.json(); // 成功响应处理
+                })
                 .then(data => {
                     if (data.redirect_url) {
                         window.location.href = data.redirect_url; // 跳转到成功页面
                     }
                 })
-                .catch(error => console.error("提交失败:", error));
+                .catch(error => {
+                    // 捕获错误并显示弹窗
+                    alert(error.message);
+                });
         });
+
 
     };
 

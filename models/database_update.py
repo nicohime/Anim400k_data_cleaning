@@ -23,7 +23,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from models.database import Video, Base
 
-DATABASE_URL = "sqlite:///./test.db"  # 替换为您的数据库 URL
+DATABASE_URL = "sqlite:///./test1.db"  # 替换为您的数据库 URL
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -38,14 +38,14 @@ def populate_videos_to_db(video_files):
     db = SessionLocal()
     for video_file in video_files:
         video_url = f"{VIDEO_BASE_URL}{video_file}"  # 构建完整 URL
-        db.add(Video(url=video_url, counter=0, max_counter=10))
+        db.add(Video(url=video_url, counter=0, max_counter=10, check_video= False))
     db.commit()
     db.close()
+if __name__ == '__main__':
+    # 插入视频数据
+    video_files = get_video_files(VIDEO_DIR)
+    populate_videos_to_db(video_files)
 
-# 插入视频数据
-video_files = get_video_files(VIDEO_DIR)
-populate_videos_to_db(video_files)
+    print("视频信息已成功导入数据库！")
 
-print("视频信息已成功导入数据库！")
-
-print("视频信息已成功导入数据库！")
+    print("视频信息已成功导入数据库！")

@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from typing import List
-from random import sample
+from random import sample, shuffle
 from random import choice
 from sqlalchemy import func
 
@@ -96,22 +96,40 @@ def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
+
 @app.get("/videos/random")
 def get_random_videos():
-    """从数据库中随机获取视频并返回完整的 URL 列表"""
+    """从数据库中随机获取视频并返回完整的 URL 列表，确保有一个校验视频"""
     db = SessionLocal()
-    videos = db.query(Video).filter(Video.counter < Video.max_counter).all()
-    if len(videos) < 10:
-        raise HTTPException(status_code=400, detail="Not enough videos available.")
-    selected_videos = sample(videos, 10)
+
+    # 获取校验视频
+    check_video = db.query(Video).filter(Video.check_video == True, Video.counter < Video.max_counter).first()
+    if not check_video:
+        raise HTTPException(status_code=400, detail="No check video available.")
+
+    # 获取非校验视频，按 counter 分组并随机选择
+    non_check_videos = []
+    for counter_value in range(0, 101):  # 假设最大 counter 不超过 100
+        videos = db.query(Video).filter(Video.check_video == False, Video.counter == counter_value, Video.counter < Video.max_counter).all()
+        if videos:
+            non_check_videos.extend(videos)
+        if len(non_check_videos) >= 11:
+            break
+
+    if len(non_check_videos) < 11:
+        raise HTTPException(status_code=400, detail="Not enough non-check videos available.")
+
+    # 从非校验视频中随机选择11个
+    selected_videos = sample(non_check_videos, 11)
+    selected_videos.append(check_video)  # 确保选中的视频中有一个校验视频
+    shuffle(selected_videos)  # 打乱顺序
+
     db.close()
+
     return [
         {"id": video.id, "url": f"{video.url}"}
         for video in selected_videos
     ]
-
-
-
 @app.get("/annotation-success", response_class=HTMLResponse)
 def annotation_success(request: Request, session_id: str = Cookie(None), session_hashed: str = None, response: Response = None):
     if not session_id or not session_hashed:
@@ -125,6 +143,8 @@ def annotation_success(request: Request, session_id: str = Cookie(None), session
     return templates.TemplateResponse("annotation_success.html", {"request": request}, headers=response.headers)
 
 
+from fastapi.responses import JSONResponse
+
 @app.post("/annotations/upload")
 def upload_annotations(annotations: List[AnnotationData], response: Response, session_id: str = Cookie(None)):
     if not session_id:
@@ -132,8 +152,43 @@ def upload_annotations(annotations: List[AnnotationData], response: Response, se
 
     db = SessionLocal()
     try:
-        # 处理上传的标注数据
+        is_check_video_valid = False
+
+        # 遍历用户上传的标注数据
         for annotation in annotations:
+            video = db.query(Video).filter(Video.id == annotation.video_id).first()
+            if not video:
+                continue  # 跳过不存在的视频
+
+            if video.check_video:
+                # 如果是校验视频，检查标注是否与标准标注完全一致
+                standard_annotation = db.query(Annotation).filter(Annotation.video_id == video.id, Annotation.user_id == -2).first()
+                if not standard_annotation or (
+                    standard_annotation.front_face != annotation.front_face or
+                    standard_annotation.voice_match != annotation.voice_match or
+                    standard_annotation.background_check != annotation.background_check or
+                    standard_annotation.visual_interference != annotation.visual_interference or
+                    standard_annotation.duration_check != annotation.duration_check
+                ):
+                    db.rollback()
+                    return JSONResponse(
+                        status_code=422,
+                        content={"message": "校验视频标注不正确，请检查您的标注后重试。"}
+                    )
+                is_check_video_valid = True
+                continue  # 校验视频不需要写入标注数据
+
+        if not is_check_video_valid:
+            db.rollback()
+            raise HTTPException(status_code=400, detail="No valid check video annotation found.")
+
+        # 处理非校验视频的标注数据
+        for annotation in annotations:
+            video = db.query(Video).filter(Video.id == annotation.video_id).first()
+            if not video or video.check_video:
+                continue  # 跳过不存在的视频和校验视频
+
+            # 写入标注数据
             db.add(Annotation(
                 video_id=annotation.video_id,
                 user_id=annotation.user_id,
@@ -143,10 +198,10 @@ def upload_annotations(annotations: List[AnnotationData], response: Response, se
                 visual_interference=annotation.visual_interference,
                 duration_check=annotation.duration_check
             ))
-            video = db.query(Video).filter(Video.id == annotation.video_id).first()
-            if video:
-                video.counter += 1
+            video.counter += 1  # 更新计数
+
         db.commit()
+
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error during data submission: {str(e)}")
@@ -160,7 +215,8 @@ def upload_annotations(annotations: List[AnnotationData], response: Response, se
     response.set_cookie("session_id", session_id, httponly=True, secure=True)
 
     # 返回上传成功和重定向 URL
-    return {"message": "Annotations uploaded successfully", "redirect_url": f"/annotation-success?session_hashed={hashed_id}"}
+    return {"message": "Annotations uploaded successfully",
+            "redirect_url": f"/annotation-success?session_hashed={hashed_id}"}
 
 
 
