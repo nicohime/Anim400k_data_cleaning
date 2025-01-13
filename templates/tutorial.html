@@ -1,134 +1,77 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Annotation</title>
+    <title>ビデオアノテーション</title>
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
+    <h1>アノテーション説明テスト </h1>
     <div class="container">
-        <!-- 视频容器 -->
+        <!-- ビデオコンテナ -->
         <div id="video-container">
-            <video width="320" height="240" controls>
-                <source src="your-video-url.mp4" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-            <!-- 单选框选项 -->
-            <div id="options-container">
-                <div class="radio-group">
-                    <label class="radio-label">
-                        <input type="radio" name="front_face" value="true"> 前脸可用
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="front_face" value="false"> 前脸不可用
-                    </label>
-                </div>
-                <div class="radio-group">
-                    <label class="radio-label">
-                        <input type="radio" name="voice_match" value="true"> 语音匹配可用
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="voice_match" value="false"> 语音匹配不可用
-                    </label>
-                </div>
-                <div class="radio-group">
-                    <label class="radio-label">
-                        <input type="radio" name="background_check" value="true"> 背景检查可用
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="background_check" value="false"> 背景检查不可用
-                    </label>
-                </div>
-                <div class="radio-group">
-                    <label class="radio-label">
-                        <input type="radio" name="visual_interference" value="true"> 视觉干扰可用
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="visual_interference" value="false"> 视觉干扰不可用
-                    </label>
-                </div>
-                <div class="radio-group">
-                    <label class="radio-label">
-                        <input type="radio" name="duration_check" value="true"> 持续时间检查可用
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="duration_check" value="false"> 持续时间检查不可用
-                    </label>
-                </div>
-            </div>
+            <!-- 这里将通过 JavaScript 动态加载视频和选项 -->
         </div>
 
-        <!-- 教程说明文档 -->
-<div id="instruction-container">
-    <h2>Annotation Rules (English Version)</h2>
+        <!-- チュートリアル説明文書 -->
+        <!-- チュートリアル説明文書 -->
+        <div id="instruction-container">
+            <h2>アノテーションルール（日本語版）</h2>
 
-    <h3>Objective</h3>
-    <p>
-        Label clips from animation and categorize them as <b>usable</b> or <b>unusable</b> by segments. <b>Usable clips</b> must include at least one <b>usable segment</b>. <b>Usable segments</b> must meet all the following rules.
-    </p>
+            <h3>目的</h3>
+            <p>
+                <li>動画内で以下のすべての条件を満たす<b>セグメント</b>をできるだけ探してください。もし、すべての条件を満たすセグメントが存在しないと感じた場合、部分的に条件を満たしているセグメントを選んでマークを付けてください</li>
+            </p>
 
-    <hr />
+            <hr />
 
-    <h3>Detailed Annotation Rules</h3>
+            <h3>詳細なアノテーションルール</h3>
 
-    <h4>1. Front Face Requirements</h4>
-    <ul>
-        <li><b>Rotation Angle:</b>
+            <h4>1. 正面顔の要件</h4>
             <ul>
-                <li>Horizontal (left/right) deviation should not exceed <b>30 degrees</b>.</li>
-                <li>Vertical (up/down) deviation should not exceed <b>20 degrees</b>.</li>
+                <li><b>可視な特徴：</b> 目、鼻、口が完全に視認でき、遮られていないこと。</li>
+                <li>少なくとも<b>3秒間</b>続くこと。</li>
+                <li><b>顔の比率：</b>
+                    <ul>
+                        <li>顔がセグメント内の各フレームで少なくとも<b>10%</b>を占めていること。</li>
+                    </ul>
+                </li>
             </ul>
-        </li>
-        <li><b>Visible Features:</b> The eyes, nose, and mouth must be fully visible and unobstructed.</li>
-        <li><b>Face Proportion:</b>
+
+            <h4>2. 音声と顔の一致</h4>
             <ul>
-                <li>The face must occupy at least <b>10%</b> of each frame in the segment.</li>
-                <li><b>Natural Expression:</b> Facial expressions should be within a normal range.</li>
+                <li>音声は、フレーム内で表示されている顔と一致し、同じキャラクターが話していることを確認する必要があります。</li>
+                <li>音声は明瞭であり、少なくとも<b>3秒間</b>続くこと。</li>
+                <li>他のキャラクターの音声や背景の音が重複しないこと。</li>
             </ul>
-        </li>
-    </ul>
 
-    <h4>2. Voice-to-Face Match</h4>
-    <ul>
-        <li>The voice must correspond to the visible face in the frame, ensuring it is the same character speaking.</li>
-        <li>The voice should be clear and last for at least <b>3 seconds</b>.</li>
-        <li>No overlapping voices from other characters or vocal background noise should be present.</li>
-    </ul>
-
-    <h4>3. Background and Interference</h4>
-    <ul>
-        <li><b>Background Requirements:</b>
+            <h4>3. 背景</h4>
             <ul>
-                <li>The background should be simple and not overly distracting, such as battle scenes, fast-moving objects, or intense lighting changes.</li>
+                <li><b>背景の要件：</b>
+                    <ul>
+                        <li>背景はシンプルであり、戦闘シーンや速く動く物体、激しい照明の変化など、過度に気を散らすものでないこと。</li>
+                    </ul>
+                </li>
             </ul>
-        </li>
-        <li><b>Visual Interference:</b>
+
+            <h4>4. 干渉</h4>
             <ul>
-                <li>No other characters (e.g., side profiles, back views) or large portions of non-target character bodies should appear in the frame.</li>
-                <li>Faces should not be obscured by objects (e.g., masks, goggles, bandages, or excessive scars).</li>
-                <li>Movements should not be too large, as rapid motion may cause facial blurring.</li>
+                <li><b>視覚的干渉：</b>
+                    <ul>
+                        <li>他の人物の顔がフレームに登場しないこと。</li>
+                    </ul>
+                </li>
             </ul>
-        </li>
-    </ul>
 
-    <h4>4. Duration Requirement</h4>
-    <ul>
-        <li><b>Minimum duration is 3 seconds</b>, with no upper limit.</li>
-    </ul>
-
-    <h4>5. Annotation Requirements</h4>
-    <ul>
-        <li>All clips must be labeled, regardless of their usability:
+            <h4>5. 継続時間の要件</h4>
             <ul>
-                <li><b>Usable:</b> Meets the above rules and is of high quality for the dataset.</li>
-                <li><b>Unusable:</b> Does not meet the above rules or has significant quality issues.</li>
+                <li><b>最小継続時間は3秒</b>であり、上限はありません。</li>
             </ul>
-        </li>
-    </ul>
 
-    <button id="submit-btn">Submit</button>
-</div>
+            <button id="submit-btn">送信</button>
+        </div>
+
 
     </div>
     <script src="/static/js/tutorial.js" defer></script>

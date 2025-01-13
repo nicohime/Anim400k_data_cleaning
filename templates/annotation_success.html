@@ -1,13 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Annotation Success</title>
+    <title>アノテーション成功</title>
+    <link rel="stylesheet" href="/static/css/styles.css">  <!-- 样式文件链接 -->
 </head>
 <body>
-    <h1>Annotation Completed Successfully!</h1>
-    <p>Thank you for your submission.</p>
-    <p>Validation number 0129</p>
+    <h1>アノテーションが成功しました！</h1>
+    <p>お疲れ様でした。以下の情報を確認してください：</p>
+
+    <div>
+        <strong>ユーザーID：</strong>
+        <span id="user-id">{{ user_id }}</span>
+        <button id="copy-btn">コピー</button>
+    </div>
+
+    <script>
+        // 复制 user_id 的功能
+        document.getElementById("copy-btn").addEventListener("click", function() {
+            const userId = document.getElementById("user-id").textContent;
+            navigator.clipboard.writeText(userId).then(() => {
+                alert("ユーザーIDがコピーされました！");
+            }).catch(err => {
+                alert("コピーに失敗しました：" + err);
+            });
+        });
+    </script>
 </body>
 </html>

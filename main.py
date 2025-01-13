@@ -103,9 +103,11 @@ def get_random_videos():
     db = SessionLocal()
 
     # 获取校验视频
-    check_video = db.query(Video).filter(Video.check_video == True, Video.counter < Video.max_counter).first()
-    if not check_video:
+    check_videos = db.query(Video).filter(Video.check_video == True, Video.counter < Video.max_counter).all()
+    if not check_videos:
         raise HTTPException(status_code=400, detail="No check video available.")
+
+    check_video = choice(check_videos)  # 随机选择一个校验视频
 
     # 获取非校验视频，按 counter 分组并随机选择
     non_check_videos = []
@@ -131,8 +133,14 @@ def get_random_videos():
         for video in selected_videos
     ]
 @app.get("/annotation-success", response_class=HTMLResponse)
-def annotation_success(request: Request, session_id: str = Cookie(None), session_hashed: str = None, response: Response = None):
-    if not session_id or not session_hashed:
+def annotation_success(
+    request: Request,
+    session_id: str = Cookie(None),
+    session_hashed: str = None,
+    user_id: str = Cookie(None),  # 从 Cookie 中提取 user_id
+    response: Response = None
+):
+    if not session_id or not session_hashed or not user_id:
         return templates.TemplateResponse("error.html", {"request": request})
     if not verify_session_id(session_id, session_hashed, SECRET_KEY_SUCCESS):
         return templates.TemplateResponse("error.html", {"request": request})
@@ -140,7 +148,13 @@ def annotation_success(request: Request, session_id: str = Cookie(None), session
     # 删除 session_id 的 cookie，防止多次提交
     response.delete_cookie("session_id", path="/")  # 确保路径与设置 cookie 时相同
 
-    return templates.TemplateResponse("annotation_success.html", {"request": request}, headers=response.headers)
+    # 将 user_id 传递给模板
+    return templates.TemplateResponse(
+        "annotation_success.html",
+        {"request": request, "user_id": user_id},
+        headers=response.headers
+    )
+
 
 
 from fastapi.responses import JSONResponse
@@ -161,20 +175,54 @@ def upload_annotations(annotations: List[AnnotationData], response: Response, se
                 continue  # 跳过不存在的视频
 
             if video.check_video:
-                # 如果是校验视频，检查标注是否与标准标注完全一致
-                standard_annotation = db.query(Annotation).filter(Annotation.video_id == video.id, Annotation.user_id == -2).first()
-                if not standard_annotation or (
-                    standard_annotation.front_face != annotation.front_face or
-                    standard_annotation.voice_match != annotation.voice_match or
-                    standard_annotation.background_check != annotation.background_check or
-                    standard_annotation.visual_interference != annotation.visual_interference or
-                    standard_annotation.duration_check != annotation.duration_check
-                ):
+                # 获取标准标注数据
+                standard_annotation = db.query(Annotation).filter(
+                    Annotation.video_id == video.id, Annotation.user_id == -2
+                ).first()
+
+                if not standard_annotation:
                     db.rollback()
                     return JSONResponse(
                         status_code=422,
-                        content={"message": "校验视频标注不正确，请检查您的标注后重试。"}
+                        content={"message": "校验视频缺少标准标注，请检查后重试。"}
                     )
+
+                # 校验逻辑：检查标准标注的五个字段
+                standard_values = [
+                    standard_annotation.front_face,
+                    standard_annotation.voice_match,
+                    standard_annotation.background_check,
+                    standard_annotation.visual_interference,
+                    standard_annotation.duration_check
+                ]
+                user_values = [
+                    annotation.front_face,
+                    annotation.voice_match,
+                    annotation.background_check,
+                    annotation.visual_interference,
+                    annotation.duration_check
+                ]
+
+                if all(value == 1 for value in standard_values):
+                    # 如果标准标注五个字段都为1，用户标注必须完全一致
+                    if standard_values != user_values:
+                        db.rollback()
+                        return JSONResponse(
+                            status_code=422,
+                            content={"message": "校验视频标注不正确，请检查您的标注后重试。"}
+                        )
+                else:
+                    # 如果标准标注存在不为1的字段，用户标注只需有任意一个字段匹配即可
+                    if not any(
+                        standard != 1 and user == standard
+                        for standard, user in zip(standard_values, user_values)
+                    ):
+                        db.rollback()
+                        return JSONResponse(
+                            status_code=422,
+                            content={"message": "校验视频标注不正确，请检查您的标注后重试。"}
+                        )
+
                 is_check_video_valid = True
                 continue  # 校验视频不需要写入标注数据
 
@@ -217,6 +265,7 @@ def upload_annotations(annotations: List[AnnotationData], response: Response, se
     # 返回上传成功和重定向 URL
     return {"message": "Annotations uploaded successfully",
             "redirect_url": f"/annotation-success?session_hashed={hashed_id}"}
+
 
 
 

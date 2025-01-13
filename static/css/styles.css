@@ -24,14 +24,32 @@ h1 {
 
 /* 视频容器样式 */
 #video-container {
-    flex: 1;
+    flex: 2;  /* 增大视频容器的宽度 */
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
-    max-width: 50%;
+    max-width: 65%; /* 修改最大宽度 */
     border-right: 2px solid #ccc;
     padding-right: 20px;
+    gap: 20px;
+}
+
+/* 教程说明文档样式 */
+#tutorial-doc {
+    flex: 1;  /* 增大教程容器的宽度 */
+    max-width: 35%;  /* 修改最大宽度 */
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+}
+
+/* 分割线 */
+.container > .divider {
+    width: 1px;
+    background-color: #ccc;
+    height: 100%;
 }
 
 /* 单选框容器样式 */
@@ -39,49 +57,49 @@ h1 {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    justify-content: center;
+    justify-content: flex-start;  /* 左对齐选项 */
     margin-top: 15px;
 }
 
+/* 单选框选项组 */
 .radio-group {
-    width: 45%; /* 每行两个选项 */
+    width: 100%;  /* 确保每个选项组占满一整行 */
     display: flex;
     justify-content: space-between;
     margin: 5px 0;
 }
 
+/* 单选框标签 */
 .radio-label {
     display: inline-block;
     cursor: pointer;
     font-size: 14px;
     color: #333;
+    width: 45%; /* 每行两个选项 */
+    margin: 5px 0; /* 适当的间距 */
 }
 
 .radio-label input[type="radio"] {
     margin-right: 5px;
 }
 
-/* 教程说明文档样式 */
-#tutorial-doc {
-    flex: 1;
-    max-width: 50%;
-    padding: 20px;
-    background-color: #fff;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    border-radius: 5px;
-}
-
+/* 视频标题和教程标题 */
 #tutorial-doc h2 {
     margin-bottom: 15px;
     font-size: 20px;
+    color: #333;
+    font-weight: bold;
 }
 
+/* 列表样式 */
 #tutorial-doc ul {
     list-style-type: disc;
     padding-left: 20px;
     margin-bottom: 20px;
+    color: #555;
 }
 
+/* 按钮样式 */
 #tutorial-doc button {
     padding: 10px 20px;
     background-color: #007bff;
@@ -90,8 +108,37 @@ h1 {
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
+    margin-top: 20px;
 }
 
 #tutorial-doc button:hover {
     background-color: #0056b3;
 }
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    #video-container {
+        max-width: 100%;
+        padding-right: 0;
+        border-right: none;
+    }
+
+    #tutorial-doc {
+        max-width: 100%;
+    }
+
+    .radio-group {
+        flex-direction: column; /* 单选框选项垂直排列 */
+        width: 100%;
+    }
+
+    .radio-label {
+        width: 100%; /* 单选框标签宽度占满整个行 */
+    }
+}
+

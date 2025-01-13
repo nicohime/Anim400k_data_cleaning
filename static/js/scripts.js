@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-     const videoContainer = document.getElementById("video-container");
+    const videoContainer = document.getElementById("video-container");
     const submitBtn = document.getElementById("submit-btn");
 
     // 获取 cookie 的函数
@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const getOrCreateUserId = async () => {
         // 尝试从 cookie 获取 user_id
         let userId = getCookie("user_id");
-        console.log("check user id history",userId);
+        console.log("check user id history", userId);
 
         // 如果 cookie 中没有 user_id，则从服务器请求一个新的
         if (!userId) {
@@ -34,11 +34,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 const data = await response.json();
                 userId = data.user_id;
-                console.log("No userid, get a new one",userId);
-                console.log("Before generation:", document.cookie)
+                console.log("No userid, get a new one", userId);
+                console.log("Before generation:", document.cookie);
                 // 存储到 cookie
                 setCookie("user_id", userId, 365);
-                console.log("Check generation:", document.cookie);// 设置 cookie 有效期 1 年
+                console.log("Check generation:", document.cookie); // 设置 cookie 有效期 1 年
             } catch (error) {
                 console.error("Error fetching user ID:", error);
                 return null; // 如果获取失败，则返回 null
@@ -48,13 +48,11 @@ document.addEventListener("DOMContentLoaded", () => {
         return userId;  // 返回获取到的 user_id（无论是从 cookie 还是服务器）
     };
 
-
-
     // 获取或创建 user_id
     const init = async () => {
         const userId = await getOrCreateUserId();
         if (!userId) {
-            alert("无法获取或创建 user_id，请稍后再试！");
+            alert("ユーザーIDの取得または作成に失敗しました。後でもう一度お試しください！");
             return;
         }
 
@@ -72,65 +70,73 @@ document.addEventListener("DOMContentLoaded", () => {
             videoIds = videoData.map(video => video.id); // 保存视频 ID
 
             // 动态插入视频到页面
-            videoData.forEach(video => {
-                const videoItem = document.createElement("div");
-                videoItem.classList.add("video-item");
-                videoItem.innerHTML = `
-                    <video width="320" height="240" controls>
-                        <source src="${video.url}" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                    <div>
-                        <label class="radio-label">
-                            <input type="radio" name="front_face-${video.id}" class="radio-btn" data-id="${video.id}" value="true">
-                            <span class="circle"></span> 前脸可用
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="front_face-${video.id}" class="radio-btn" data-id="${video.id}" value="false">
-                            <span class="circle"></span> 前脸不可用
-                        </label>
-                    </div>
-                    <div>
-                        <label class="radio-label">
-                            <input type="radio" name="voice_match-${video.id}" class="radio-btn" data-id="${video.id}" value="true">
-                            <span class="circle"></span> 语音匹配可用
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="voice_match-${video.id}" class="radio-btn" data-id="${video.id}" value="false">
-                            <span class="circle"></span> 语音匹配不可用
-                        </label>
-                    </div>
-                    <div>
-                        <label class="radio-label">
-                            <input type="radio" name="background_check-${video.id}" class="radio-btn" data-id="${video.id}" value="true">
-                            <span class="circle"></span> 背景检查可用
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="background_check-${video.id}" class="radio-btn" data-id="${video.id}" value="false">
-                            <span class="circle"></span> 背景检查不可用
-                        </label>
-                    </div>
-                    <div>
-                        <label class="radio-label">
-                            <input type="radio" name="visual_interference-${video.id}" class="radio-btn" data-id="${video.id}" value="true">
-                            <span class="circle"></span> 视觉干扰可用
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="visual_interference-${video.id}" class="radio-btn" data-id="${video.id}" value="false">
-                            <span class="circle"></span> 视觉干扰不可用
-                        </label>
-                    </div>
-                    <div>
-                        <label class="radio-label">
-                            <input type="radio" name="duration_check-${video.id}" class="radio-btn" data-id="${video.id}" value="true">
-                            <span class="circle"></span> 持续时间检查可用
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="duration_check-${video.id}" class="radio-btn" data-id="${video.id}" value="false">
-                            <span class="circle"></span> 持续时间检查不可用
-                        </label>
-                    </div>
-                `;
+        videoData.forEach(video => {
+            const videoItem = document.createElement("div");
+            videoItem.classList.add("video-item");
+            videoItem.innerHTML = `
+                <video width="320" height="240" controls>
+                    <source src="${video.url}" type="video/mp4">
+                    あなたのブラウザはビデオタグをサポートしていません。
+                </video>
+                <div class="instruction">
+                    アニメを見終わった後、動画内で以下のすべての条件を満たすセグメントをできるだけ探してください。もし、すべての条件を満たすセグメントが見つからない場合は、部分的に条件を満たしているセグメントを選んでマークしてください：
+                </div>
+                <div>
+                    <p>1. 正面の顔がはっきりと見え、顔の面積が画面の10%以上を占め、かつその状態が3秒以上続くセグメントはありますか？</p>
+                    <label class="radio-label">
+                        <input type="radio" name="front_face-${video.id}" class="radio-btn" data-id="${video.id}" value="true" onchange="showQuestion(${video.id}, 1, true)">
+                        はい
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="front_face-${video.id}" class="radio-btn" data-id="${video.id}" value="false" onchange="showQuestion(${video.id}, 1, false)">
+                        いいえ
+                    </label>
+                </div>
+                <div id="${video.id}-2" hidden="hidden">
+                    <p>2. １の条件で、登場人物が3秒以上口を開けて話しているシーンはありますか？</p>
+                    <label class="radio-label">
+                        <input type="radio" name="voice_match-${video.id}" class="radio-btn" data-id="${video.id}" value="true" onchange="showQuestion(${video.id}, 2, true)">
+                        はい
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="voice_match-${video.id}" class="radio-btn" data-id="${video.id}" value="false" onchange="showQuestion(${video.id}, 2, false)">
+                        いいえ
+                    </label>
+                </div>
+                <div id="${video.id}-3" hidden="hidden">
+                    <p>3. 2の条件で、背景はシンプルですか？（激しい照明の変化や激しい戦闘シーンがない）</p>
+                    <label class="radio-label">
+                        <input type="radio" name="background_check-${video.id}" class="radio-btn" data-id="${video.id}" value="true" onchange="showQuestion(${video.id}, 3, true)">
+                        はい
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="background_check-${video.id}" class="radio-btn" data-id="${video.id}" value="false" onchange="showQuestion(${video.id}, 3, false)">
+                        いいえ
+                    </label>
+                </div>
+                <div id="${video.id}-4" hidden="hidden">
+                    <p>4. ３の条件で、他の人物の顔は見えませんか？</p>
+                    <label class="radio-label">
+                        <input type="radio" name="no_other_people-${video.id}" class="radio-btn" data-id="${video.id}" value="true" onchange="showQuestion(${video.id}, 4, true)">
+                        はい
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="no_other_people-${video.id}" class="radio-btn" data-id="${video.id}" value="false" onchange="showQuestion(${video.id}, 4, false)">
+                        いいえ
+                    </label>
+                </div>
+                <div id="${video.id}-5" hidden="hidden">
+                    <p>5. 上記のすべての条件を満たし、かつ3秒以上続くセグメントはありますか？</p>
+                    <label class="radio-label">
+                        <input type="radio" name="duration_check-${video.id}" class="radio-btn" data-id="${video.id}" value="true">
+                        はい
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="duration_check-${video.id}" class="radio-btn" data-id="${video.id}" value="false">
+                        いいえ
+                    </label>
+                </div>
+            `;
                 videoContainer.appendChild(videoItem);
 
                 // 为每个视频的单选按钮绑定事件监听器
@@ -165,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             });
         } catch (error) {
-            console.error("加载视频失败:", error);
+            console.error("動画の読み込みに失敗しました:", error);
         }
 
         // 提交按钮逻辑
@@ -182,7 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             if (unmarkedVideos.length > 0 || results.length === 0) {
-                alert(`还有 ${unmarkedVideos.length || videoIds.length} 个视频未标注，请完成后再提交！`);
+                alert(`まだ ${unmarkedVideos.length || videoIds.length} 本のビデオにマークを付けていません。マークを完了してから提出してください！`);
                 return;
             }
 
@@ -199,7 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         if (errorData.message) {
                             throw new Error(errorData.message); // 抛出后端返回的错误消息
                         } else {
-                            throw new Error("提交失败，请稍后再试！");
+                            throw new Error("送信に失敗しました。後でもう一度お試しください！");
                         }
                     }
                     return response.json(); // 成功响应处理
@@ -214,9 +220,56 @@ document.addEventListener("DOMContentLoaded", () => {
                     alert(error.message);
                 });
         });
-
-
     };
 
     init(); // 初始化流程
 });
+
+function showQuestion(videoId, questionId, value) {
+    if (value) {
+        // 用户选择「是」
+        let nextQuestion = document.getElementById(`${videoId}-${questionId + 1}`);
+        if (nextQuestion) {
+            // 显示下一个问题
+            nextQuestion.removeAttribute("hidden");
+
+            // 重置下一个问题及其后续问题的选项为未选择状态
+            resetQuestions(videoId, questionId + 1);
+        }
+    } else {
+        // 用户选择「否」
+        let currentId = questionId + 1;
+        let nextQuestion = document.getElementById(`${videoId}-${currentId}`);
+
+        while (nextQuestion) {
+            // 隐藏后续问题
+            nextQuestion.setAttribute("hidden", "hidden");
+
+            // 将所有选项设置为「否」
+            let radios = nextQuestion.querySelectorAll('input[type="radio"][value="false"]');
+            radios.forEach(radio => {
+                radio.checked = true;
+            });
+
+            // 准备处理下一个问题
+            currentId++;
+            nextQuestion = document.getElementById(`${videoId}-${currentId}`);
+        }
+    }
+}
+
+// 重置后续问题的选项为未选择状态
+function resetQuestions(videoId, fromQuestionId) {
+    let nextQuestion = document.getElementById(`${videoId}-${fromQuestionId}`);
+    while (nextQuestion) {
+        // 获取所有选项并重置为未选择状态
+        let radios = nextQuestion.querySelectorAll('input[type="radio"]');
+        radios.forEach(radio => {
+            radio.checked = false;
+        });
+
+        // 准备处理下一个问题
+        fromQuestionId++;
+        nextQuestion = document.getElementById(`${videoId}-${fromQuestionId}`);
+    }
+}
