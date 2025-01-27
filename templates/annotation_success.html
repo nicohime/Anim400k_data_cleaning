@@ -3,17 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>アノテーション成功</title>
-    <link rel="stylesheet" href="/static/css/styles.css">  <!-- 样式文件链接 -->
+    <title>映像判断成功</title>
+    <link rel="stylesheet" href="/static/css/styles.css">  <!-- 样式文件リンク -->
 </head>
 <body>
-    <h1>アノテーションが成功しました！</h1>
+    <h1>映像判断が成功しました！</h1>
     <p>お疲れ様でした。以下の情報を確認してください：</p>
 
     <div>
         <strong>ユーザーID：</strong>
         <span id="user-id">{{ user_id }}</span>
         <button id="copy-btn">コピー</button>
+    </div>
+    <div>
+        <strong>キーワード：</strong>
+        <span id="verification-code">さくら</span>
     </div>
 
     <script>

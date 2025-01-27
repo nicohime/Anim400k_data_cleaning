@@ -16,11 +16,11 @@
         </library>
       </libraries>
     </data-source>
-    <data-source source="LOCAL" name="test1" uuid="c8e73f4b-7613-4b88-8b26-9d6957087c01">
+    <data-source source="LOCAL" name="test1" uuid="2a9a8872-fc72-43f5-be29-fd8cfb30cdb0">
       <driver-ref>sqlite.xerial</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
-      <jdbc-url>jdbc:sqlite:C:\Users\nicohime\PycharmProjects\Anim400k_data_cleaning\models\test1.db</jdbc-url>
+      <jdbc-url>jdbc:sqlite:G:\PythonProjects\Anim400k_data_cleaning\models\test1.db</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
       <libraries>
         <library>

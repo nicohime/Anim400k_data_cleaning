@@ -99,32 +99,57 @@ def read_root(request: Request):
 
 @app.get("/videos/random")
 def get_random_videos():
-    """从数据库中随机获取视频并返回完整的 URL 列表，确保有一个校验视频"""
+    """从数据库中随机获取视频并返回完整的 URL 列表，确保有两个校验视频和十个未标注视频"""
     db = SessionLocal()
 
-    # 获取校验视频
+    # 获取所有校验视频
     check_videos = db.query(Video).filter(Video.check_video == True, Video.counter < Video.max_counter).all()
+
     if not check_videos:
-        raise HTTPException(status_code=400, detail="No check video available.")
+        raise HTTPException(status_code=400, detail="Not enough check videos available.")
 
-    check_video = choice(check_videos)  # 随机选择一个校验视频
+    # 筛选校验标签值完全为 True 和部分为 False 的视频
+    check_videos_true = []
+    check_videos_partial = []
 
-    # 获取非校验视频，按 counter 分组并随机选择
+    for video in check_videos:
+        annotation = db.query(Annotation).filter(Annotation.video_id == video.id).first()
+        if not annotation:
+            continue
+
+        if (annotation.front_face and annotation.voice_match and annotation.background_check and
+            annotation.visual_interference and annotation.duration_check):
+            check_videos_true.append(video)
+        else:
+            check_videos_partial.append(video)
+
+    if len(check_videos_true) < 1 or len(check_videos_partial) < 1:
+        raise HTTPException(status_code=400, detail="Not enough valid check videos available.")
+
+    # 随机选择一个完全校验通过的视频和一个部分校验通过的视频
+    selected_check_videos = [
+        sample(check_videos_true, 1)[0],
+        sample(check_videos_partial, 1)[0]
+    ]
+
+    # 获取未标注视频，按 counter 分组并随机选择
     non_check_videos = []
     for counter_value in range(0, 101):  # 假设最大 counter 不超过 100
         videos = db.query(Video).filter(Video.check_video == False, Video.counter == counter_value, Video.counter < Video.max_counter).all()
         if videos:
             non_check_videos.extend(videos)
-        if len(non_check_videos) >= 11:
+        if len(non_check_videos) >= 10:
             break
 
-    if len(non_check_videos) < 11:
+    if len(non_check_videos) < 10:
         raise HTTPException(status_code=400, detail="Not enough non-check videos available.")
 
-    # 从非校验视频中随机选择11个
-    selected_videos = sample(non_check_videos, 11)
-    selected_videos.append(check_video)  # 确保选中的视频中有一个校验视频
-    shuffle(selected_videos)  # 打乱顺序
+    # 从未标注视频中随机选择10个
+    selected_non_check_videos = sample(non_check_videos, 10)
+
+    # 合并视频列表并打乱顺序
+    selected_videos = selected_check_videos + selected_non_check_videos
+    shuffle(selected_videos)
 
     db.close()
 
@@ -132,6 +157,8 @@ def get_random_videos():
         {"id": video.id, "url": f"{video.url}"}
         for video in selected_videos
     ]
+
+
 @app.get("/annotation-success", response_class=HTMLResponse)
 def annotation_success(
     request: Request,
@@ -209,18 +236,15 @@ def upload_annotations(annotations: List[AnnotationData], response: Response, se
                         db.rollback()
                         return JSONResponse(
                             status_code=422,
-                            content={"message": "校验视频标注不正确，请检查您的标注后重试。"}
+                            content={"message": "映像判断の結果が正しくありません、確認して再試行してください。"}
                         )
                 else:
-                    # 如果标准标注存在不为1的字段，用户标注只需有任意一个字段匹配即可
-                    if not any(
-                        standard != 1 and user == standard
-                        for standard, user in zip(standard_values, user_values)
-                    ):
+                    # 如果标准标注存在不为1的字段，用户标注的五个标签中至少有一个为 false
+                    if all(user == 1 for user in user_values):
                         db.rollback()
                         return JSONResponse(
                             status_code=422,
-                            content={"message": "校验视频标注不正确，请检查您的标注后重试。"}
+                            content={"message": "映像判断の結果が正しくありません、確認して再試行してください。"}
                         )
 
                 is_check_video_valid = True
@@ -267,8 +291,6 @@ def upload_annotations(annotations: List[AnnotationData], response: Response, se
             "redirect_url": f"/annotation-success?session_hashed={hashed_id}"}
 
 
-
-
 @app.post("/user/create")
 def create_user():
     user_id = str(uuid.uuid4())
@@ -291,50 +313,8 @@ TUTORIAL_VIDEOS = [
         "front_face": True,
         "voice_match": True,
         "background_check": True,
-        "visual_interference": False,
-        "duration_check": True,
-    }},
-    {"id": 2, "url": "https://anim400k.nicohime.com/0c0ac371-d914-4510-b244-d202037fd013.mp4", "correct_answers": {
-        "front_face": True,
-        "voice_match": True,
-        "background_check": True,
-        "visual_interference": False,
-        "duration_check": True,
-    }},
-    {"id": 3, "url": "https://anim400k.nicohime.com/18df0cc2-35bf-495c-8649-65e6d17ba1c9.mp4", "correct_answers": {
-        "front_face": True,
-        "voice_match": True,
-        "background_check": True,
-        "visual_interference": False,
-        "duration_check": True,
-    }},
-    {"id": 4, "url": "https://anim400k.nicohime.com/246a6290-7c48-4802-953d-20661d442182.mp4", "correct_answers": {
-        "front_face": True,
-        "voice_match": True,
-        "background_check": True,
-        "visual_interference": False,
-        "duration_check": True,
-    }},
-    {"id": 5, "url": "https://anim400k.nicohime.com/30d5a6d2-5c77-44c1-9dcb-552e0b0abf42.mp4", "correct_answers": {
-        "front_face": True,
-        "voice_match": True,
-        "background_check": True,
-        "visual_interference": False,
-        "duration_check": True,
-    }},
-    {"id": 6, "url": "https://anim400k.nicohime.com/70adcdc7-e315-40ec-8ba1-bc974946fc4c.mp4", "correct_answers": {
-        "front_face": True,
-        "voice_match": True,
-        "background_check": True,
-        "visual_interference": False,
-        "duration_check": True,
-    }},
-    {"id": 7, "url": "https://anim400k.nicohime.com/927ddda6-34af-4982-bedf-136a687566ff.mp4", "correct_answers": {
-        "front_face": True,
-        "voice_match": True,
-        "background_check": True,
-        "visual_interference": False,
-        "duration_check": True,
+        "visual_interference": True,
+        "duration_check": False,
     }},
 ]
 
@@ -377,9 +357,11 @@ async def validate_tutorial(validation_data: TutorialValidationData):
         raise HTTPException(status_code=400, detail="Invalid video ID")
 
     correct_answers = video["correct_answers"]
-
-    # 比较用户提交的答案与正确答案
+    print(validation_data)
+    # 比较用户提交的答案与正确答案，忽略 duration_check 字段
     for field, expected in correct_answers.items():
+        if field == "duration_check":  # 跳过 duration_check 字段
+            continue
         user_answer = getattr(validation_data, field)
         if user_answer != expected:
             raise HTTPException(status_code=400, detail=f"Incorrect answer.")
